@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Website & Visualisasi Interaktif Desa Merambung - Ulu Manna</title>
-    <!-- Tailwind CSS -->
+    <title>Visualisasi Interaktif Desa Merambung - Ulu Manna, Bengkulu Selatan</title>
+    
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        merambung: {
+                        brand: {
                             50: '#f0fdf4',
                             100: '#dcfce7',
                             500: '#22c55e',
@@ -20,11 +21,9 @@
                             800: '#166534',
                             900: '#14532d',
                         },
-                        coffee: {
-                            500: '#8b5cf6',
-                            700: '#6f4e37',
-                            800: '#53382c',
-                            900: '#382319'
+                        earth: {
+                            500: '#d97706',
+                            700: '#b45309',
                         }
                     },
                     fontFamily: {
@@ -34,1001 +33,1174 @@
             }
         }
     </script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js -->
+
+    <!-- Leaflet CSS & JS for Interactive Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Three.js for 3D Visualizer -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Custom CSS Styles -->
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0f172a;
-            color: #f8fafc;
+        #map {
+            height: 520px;
+            width: 100%;
+            border-radius: 0.75rem;
+            z-index: 10;
+        }
+        
+        .leaflet-popup-content-wrapper {
+            border-radius: 0.75rem;
+            padding: 0.25rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
 
         .glass-card {
-            background: rgba(30, 41, 59, 0.75);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .glass-card-hover {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .glass-card-hover:hover {
-            transform: translateY(-4px);
-            border-color: rgba(34, 197, 94, 0.4);
-            box-shadow: 0 12px 24px -10px rgba(34, 197, 94, 0.25);
-        }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #0f172a;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #334155;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #16a34a;
-        }
-
-        /* Pulse Beacon */
-        .beacon-ring {
-            position: absolute;
-            border-radius: 50%;
-            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
-        }
-        @keyframes pulse-ring {
-            0% { transform: scale(0.95); opacity: 0.8; }
-            50% { transform: scale(1.4); opacity: 0.3; }
-            100% { transform: scale(1.8); opacity: 0; }
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col antialiased selection:bg-emerald-500 selection:text-white">
+<body class="bg-slate-50 text-slate-800 font-sans antialiased flex flex-col min-h-screen">
 
-    <!-- NAVIGATION BAR -->
-    <header class="sticky top-0 z-50 glass-card border-b border-slate-800/80 px-4 lg:px-8 py-3">
-        <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <!-- Brand Logo & Title -->
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white shadow-lg shadow-emerald-900/30 font-bold text-xl">
-                    <i class="fa-solid fa-mountain-sun"></i>
+    <!-- Top Bar Header -->
+    <header class="sticky top-0 z-50 bg-brand-900 text-white shadow-lg border-b border-brand-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <!-- Logo & Title -->
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-full bg-brand-600 border-2 border-amber-400 flex items-center justify-center shadow-inner">
+                        <i class="fa-solid fa-tree text-2xl text-amber-300"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="font-bold text-xl sm:text-2xl tracking-wide">DESA MERAMBUNG</h1>
+                            <span class="bg-amber-500/20 text-amber-300 text-xs px-2.5 py-0.5 rounded-full font-semibold border border-amber-400/30">Ulu Manna</span>
+                        </div>
+                        <p class="text-xs text-brand-200">Kabupaten Bengkulu Selatan, Provinsi Bengkulu</p>
+                    </div>
                 </div>
-                <div>
-                    <h1 class="font-extrabold text-lg md:text-xl tracking-tight text-white flex items-center gap-2">
-                        DESA MERAMBUNG
-                        <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hidden sm:inline-block">
-                            Ulu Manna
-                        </span>
-                    </h1>
-                    <p class="text-xs text-slate-400">Kabupaten Bengkulu Selatan • Provinsi Bengkulu</p>
+
+                <!-- Navigation Tabs (Desktop) -->
+                <nav class="hidden lg:flex items-center space-x-1">
+                    <button onclick="switchTab('peta')" id="nav-peta" class="nav-btn px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 bg-brand-700 text-white shadow">
+                        <i class="fa-solid fa-map-location-dot mr-1.5 text-amber-400"></i> Peta Wilayah
+                    </button>
+                    <button onclick="switchTab('demografi')" id="nav-demografi" class="nav-btn px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 text-brand-100 hover:bg-brand-800 hover:text-white">
+                        <i class="fa-solid fa-chart-pie mr-1.5 text-amber-400"></i> Statistik & Demografi
+                    </button>
+                    <button onclick="switchTab('potensi')" id="nav-potensi" class="nav-btn px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 text-brand-100 hover:bg-brand-800 hover:text-white">
+                        <i class="fa-solid fa-wheat-awn mr-1.5 text-amber-400"></i> Potensi & Ekonomi
+                    </button>
+                    <button onclick="switchTab('transparansi')" id="nav-transparansi" class="nav-btn px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 text-brand-100 hover:bg-brand-800 hover:text-white">
+                        <i class="fa-solid fa-hand-holding-dollar mr-1.5 text-amber-400"></i> APBDes & Pembangunan
+                    </button>
+                </nav>
+
+                <!-- Quick Contact / Emergency CTA -->
+                <div class="hidden sm:flex items-center gap-2">
+                    <button onclick="openModal('modalLayanan')" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold px-4 py-2 rounded-lg text-sm shadow transition duration-200 flex items-center gap-2">
+                        <i class="fa-solid fa-file-signature"></i>
+                        <span>Layanan Warga</span>
+                    </button>
                 </div>
-            </div>
 
-            <!-- Desktop Nav Links -->
-            <nav class="hidden md:flex items-center gap-1 lg:gap-2 text-sm font-medium">
-                <a href="#visualizer" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-emerald-400 hover:bg-slate-800/60 transition">Peta 3D</a>
-                <a href="#potensi" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-emerald-400 hover:bg-slate-800/60 transition">Potensi & Wisata</a>
-                <a href="#statistik" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-emerald-400 hover:bg-slate-800/60 transition">Demografi & APBDes</a>
-                <a href="#layanan" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-emerald-400 hover:bg-slate-800/60 transition">Layanan Digital</a>
-                <a href="#agro" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-emerald-400 hover:bg-slate-800/60 transition">Smart Agro</a>
-            </nav>
-
-            <!-- Quick Action & Mobile Menu Button -->
-            <div class="flex items-center gap-2">
-                <button onclick="showToast('Sistem Informasi Desa Merambung Aktif - Versi Digital 2026', 'info')" class="hidden sm:flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-2 rounded-xl transition shadow-md shadow-emerald-900/20">
-                    <i class="fa-solid fa-shield-halved"></i> Portal Resmi
-                </button>
-                <button id="mobileMenuBtn" class="md:hidden text-slate-300 hover:text-white p-2 rounded-lg bg-slate-800">
-                    <i class="fa-solid fa-bars text-lg"></i>
-                </button>
+                <!-- Mobile Menu Button -->
+                <div class="lg:hidden flex items-center">
+                    <button id="mobile-menu-btn" onclick="toggleMobileMenu()" class="text-white hover:text-amber-300 p-2 focus:outline-none">
+                        <i class="fa-solid fa-bars text-2xl"></i>
+                    </button>
+                </div>
             </div>
         </div>
 
         <!-- Mobile Navigation Menu -->
-        <div id="mobileMenu" class="hidden md:hidden mt-3 pt-3 border-t border-slate-800 flex flex-col gap-2 text-sm">
-            <a href="#visualizer" class="px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800">Peta Interaktif 3D</a>
-            <a href="#potensi" class="px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800">Potensi Desa</a>
-            <a href="#statistik" class="px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800">Statistik & Transparansi</a>
-            <a href="#layanan" class="px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800">Layanan Publik</a>
-            <a href="#agro" class="px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800">Kalender Tanam</a>
+        <div id="mobile-menu" class="hidden lg:hidden bg-brand-950 border-t border-brand-800 px-4 pt-2 pb-4 space-y-1 shadow-inner">
+            <button onclick="switchTab('peta'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-md text-sm font-medium text-white hover:bg-brand-800 flex items-center gap-2">
+                <i class="fa-solid fa-map-location-dot text-amber-400"></i> Peta Wilayah Interaktif
+            </button>
+            <button onclick="switchTab('demografi'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-md text-sm font-medium text-brand-100 hover:bg-brand-800 flex items-center gap-2">
+                <i class="fa-solid fa-chart-pie text-amber-400"></i> Data Statistik & Demografi
+            </button>
+            <button onclick="switchTab('potensi'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-md text-sm font-medium text-brand-100 hover:bg-brand-800 flex items-center gap-2">
+                <i class="fa-solid fa-wheat-awn text-amber-400"></i> Potensi Komoditas & Wisata
+            </button>
+            <button onclick="switchTab('transparansi'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-md text-sm font-medium text-brand-100 hover:bg-brand-800 flex items-center gap-2">
+                <i class="fa-solid fa-hand-holding-dollar text-amber-400"></i> Transparansi APBDes
+            </button>
+            <button onclick="openModal('modalLayanan'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-md text-sm font-medium bg-amber-500 text-slate-900 font-semibold mt-2 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-file-signature"></i> Layanan Warga Online
+            </button>
         </div>
     </header>
 
-    <!-- HERO BANNER SECTION -->
-    <section class="relative overflow-hidden py-12 lg:py-16 px-4 lg:px-8 border-b border-slate-800 bg-gradient-to-b from-slate-900 via-slate-900/90 to-slate-950">
-        <!-- Background Ambient Glow -->
-        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-emerald-500/10 blur-[120px] pointer-events-none rounded-full"></div>
-
-        <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
-            <!-- Left Info Column -->
-            <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
-                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                    Kawasan Bukit Barisan • Ulu Manna Bengkulu Selatan
+    <!-- Key Village Metrics Strip -->
+    <section class="bg-gradient-to-r from-brand-800 via-brand-700 to-emerald-800 text-white py-6 shadow-md border-b border-emerald-600">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 text-center">
+                <div class="bg-white/10 backdrop-blur-sm p-3 sm:p-4 rounded-xl border border-white/10 hover:bg-white/15 transition">
+                    <p class="text-xs sm:text-sm text-brand-100 font-medium">Jumlah Penduduk</p>
+                    <p class="text-2xl sm:text-3xl font-extrabold text-amber-300 mt-1">630 <span class="text-xs text-white font-normal">Jiwa</span></p>
+                    <span class="text-[10px] text-emerald-200">208 Kepala Keluarga</span>
                 </div>
+                <div class="bg-white/10 backdrop-blur-sm p-3 sm:p-4 rounded-xl border border-white/10 hover:bg-white/15 transition">
+                    <p class="text-xs sm:text-sm text-brand-100 font-medium">Komoditas Utama</p>
+                    <p class="text-lg sm:text-2xl font-bold text-white mt-1">Kopi, Sahang & Durian</p>
+                    <span class="text-[10px] text-emerald-200">Plus Durian Musiman & Sadesahe Jagung</span>
+                </div>
+                <div class="bg-white/10 backdrop-blur-sm p-3 sm:p-4 rounded-xl border border-white/10 hover:bg-white/15 transition">
+                    <p class="text-xs sm:text-sm text-brand-100 font-medium">Potensi Alam</p>
+                    <p class="text-lg sm:text-2xl font-bold text-amber-300 mt-1">Sungai Manna</p>
+                    <span class="text-[10px] text-emerald-200">Wisata Arung Jeram & Perkebunan</span>
+                </div>
+                <div class="bg-white/10 backdrop-blur-sm p-3 sm:p-4 rounded-xl border border-white/10 hover:bg-white/15 transition">
+                    <p class="text-xs sm:text-sm text-brand-100 font-medium">Lahan Pertanian</p>
+                    <p class="text-2xl sm:text-3xl font-extrabold text-white mt-1">8+ <span class="text-xs text-white font-normal">Hektar</span></p>
+                    <span class="text-[10px] text-emerald-200">Persawahan Lubuk Betung</span>
+                </div>
+            </div>
+        </div>
+    </section>
 
-                <h2 class="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight">
-                    Selamat Datang di <br>
-                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-amber-300">
-                        Desa Merambung
-                    </span>
+    <!-- Hero / Highlight Card Banner Desa -->
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+        <div class="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden grid grid-cols-1 md:grid-cols-12">
+            <div class="md:col-span-7 relative min-h-[260px] sm:min-h-[320px]">
+                <img src="merambung.jpg" alt="Pemerintah Desa Merambung Ulu Manna" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-4 sm:p-6 md:hidden">
+                    <span class="bg-amber-500 text-slate-950 font-bold text-xs px-3 py-1 rounded-full">Kegiatan Pembangunan Desa</span>
+                </div>
+            </div>
+            <div class="md:col-span-5 p-6 sm:p-8 flex flex-col justify-center bg-gradient-to-br from-slate-900 to-brand-950 text-white">
+                <div class="flex items-center gap-2 text-amber-400 text-xs font-semibold uppercase tracking-wider mb-2">
+                    <i class="fa-solid fa-users-gear"></i> Pemdes Merambung & Bhabinkamtibmas/Babinsa
+                </div>
+                <h2 class="text-xl sm:text-2xl font-bold mb-3 text-white leading-snug">
+                    Sinergi Pembangunan Infrastruktur Desa Merambung
                 </h2>
-
-                <p class="text-slate-300 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto lg:mx-0">
-                    Desa yang asri di lereng pegunungan Ulu Manna, berbatasan langsung dengan aliran Sungai Pino dan areal persawahan Ataran Lubuk Betung. Terkenal dengan komoditas Kopi Robusta unggulan, jembatan gantung ikonik, serta semangat swakelola warga.
+                <p class="text-xs sm:text-sm text-slate-300 leading-relaxed mb-4">
+                    Dokumentasi serah terima dan peninjauan lapangan kegiatan **Pembangunan/Pengerasan Jalan Usaha Tani (Jalan Rabat Beton)** di akses Jembatan Gantung Ataran Lubuk Betung, bersumber dari Dana Desa (DD) TA 2024.
                 </p>
-
-                <!-- Key Metrics Badges -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-                    <div class="glass-card p-3 rounded-2xl text-center">
-                        <div class="text-xs text-slate-400 font-medium">Jumlah Penduduk</div>
-                        <div class="text-xl sm:text-2xl font-bold text-emerald-400 mt-1">~630</div>
-                        <div class="text-[10px] text-slate-500">208 Kepala Keluarga</div>
-                    </div>
-                    <div class="glass-card p-3 rounded-2xl text-center">
-                        <div class="text-xs text-slate-400 font-medium">Sawah Ataran</div>
-                        <div class="text-xl sm:text-2xl font-bold text-teal-400 mt-1">8+ Ha</div>
-                        <div class="text-[10px] text-slate-500">Lubuk Betung</div>
-                    </div>
-                    <div class="glass-card p-3 rounded-2xl text-center">
-                        <div class="text-xs text-slate-400 font-medium">Komoditas Utama</div>
-                        <div class="text-xl sm:text-2xl font-bold text-amber-400 mt-1">Kopi & Padi</div>
-                        <div class="text-[10px] text-slate-500">Hasil Tani Ulu Manna</div>
-                    </div>
-                    <div class="glass-card p-3 rounded-2xl text-center">
-                        <div class="text-xs text-slate-400 font-medium">Status Desa</div>
-                        <div class="text-xl sm:text-2xl font-bold text-cyan-400 mt-1">Kampung KB</div>
-                        <div class="text-[10px] text-slate-500">Desa Mandiri Sehat</div>
-                    </div>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="flex flex-wrap items-center justify-center lg:justify-start gap-3 pt-2">
-                    <a href="#visualizer" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold text-sm px-6 py-3 rounded-xl transition shadow-lg shadow-emerald-900/30 flex items-center gap-2">
-                        <i class="fa-solid fa-map-location-dot"></i> Jelajahi Peta 3D
-                    </a>
-                    <a href="#layanan" class="glass-card hover:bg-slate-800 text-slate-200 font-semibold text-sm px-6 py-3 rounded-xl transition flex items-center gap-2">
-                        <i class="fa-solid fa-file-signature"></i> Layanan Surat Online
-                    </a>
-                </div>
-            </div>
-
-            <!-- Right Widget Card (Live Weather & Info) -->
-            <div class="lg:col-span-5">
-                <div class="glass-card rounded-3xl p-6 relative overflow-hidden border border-slate-700/60 shadow-2xl">
-                    <div class="flex items-center justify-between pb-4 border-b border-slate-800">
-                        <div>
-                            <span class="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Cuaca Hari Ini</span>
-                            <h3 class="text-lg font-bold text-white">Ulu Manna, Bengkulu Selatan</h3>
-                        </div>
-                        <div class="w-10 h-10 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-xl">
-                            <i class="fa-solid fa-cloud-sun"></i>
-                        </div>
-                    </div>
-
-                    <!-- Weather Info Grid -->
-                    <div class="py-5 flex items-center justify-between">
-                        <div>
-                            <div class="text-4xl font-extrabold text-white" id="tempDisplay">26°C</div>
-                            <div class="text-xs text-slate-400 mt-1" id="weatherDesc">Cerah Berawan • Angin Lembut</div>
-                        </div>
-                        <div class="text-right space-y-1 text-xs text-slate-300">
-                            <div><i class="fa-solid fa-droplet text-cyan-400 mr-1.5"></i> Kelembapan: <span class="font-semibold text-white">82%</span></div>
-                            <div><i class="fa-solid fa-wind text-slate-400 mr-1.5"></i> Kecepatan: <span class="font-semibold text-white">8 km/jam</span></div>
-                            <div><i class="fa-solid fa-mountain text-emerald-400 mr-1.5"></i> Elevasi: <span class="font-semibold text-white">~350 mdpl</span></div>
-                        </div>
-                    </div>
-
-                    <!-- Info Alert Box -->
-                    <div class="bg-emerald-950/60 border border-emerald-500/30 rounded-2xl p-4 flex items-start gap-3">
-                        <i class="fa-solid fa-bullhorn text-emerald-400 text-lg mt-0.5"></i>
-                        <div class="text-xs">
-                            <strong class="text-emerald-300 font-semibold block mb-0.5">Pengumuman Desa:</strong>
-                            Pembangunan Jembatan Gantung Ataran Lubuk Betung & Fasilitas Lapangan Futsal Desa telah siap dimanfaatkan untuk kenyamanan seluruh warga Desa Merambung!
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- INTERACTIVE 3D & MAP VISUALIZER SECTION -->
-    <section id="visualizer" class="py-12 px-4 lg:px-8 max-w-7xl mx-auto w-full">
-        <div class="flex flex-col md:flex-row md:items-end justify-between mb-6 gap-4">
-            <div>
-                <div class="text-emerald-400 text-xs font-semibold uppercase tracking-wider mb-1">Eksplorasi Spasial</div>
-                <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Visualisasi Spasial & Peta Interaktif 3D</h2>
-                <p class="text-slate-400 text-sm mt-1">Klik pada titik lokasi ikonik untuk melihat detail fasilitas dan area penting di Desa Merambung.</p>
-            </div>
-            
-            <!-- Controls Toolbar -->
-            <div class="flex items-center gap-2 self-start md:self-auto bg-slate-900 p-1.5 rounded-xl border border-slate-800 text-xs">
-                <button onclick="setMapCamera('overview')" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-500 transition">
-                    <i class="fa-solid fa-globe mr-1"></i> Utama
-                </button>
-                <button onclick="setMapCamera('jembatan')" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white transition">
-                    <i class="fa-solid fa-bridge mr-1"></i> Jembatan
-                </button>
-                <button onclick="setMapCamera('futsal')" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white transition">
-                    <i class="fa-solid fa-futbol mr-1"></i> Futsal
-                </button>
-                <button onclick="setMapCamera('kebun')" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white transition">
-                    <i class="fa-solid fa-seedling mr-1"></i> Kebun Kopi
-                </button>
-            </div>
-        </div>
-
-        <!-- Visualizer Container -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-            <!-- 3D Canvas Visualizer -->
-            <div class="lg:col-span-8 glass-card rounded-3xl overflow-hidden border border-slate-800 relative h-[420px] sm:h-[480px]">
-                <div id="threejs-container" class="w-full h-full cursor-grab active:cursor-grabbing"></div>
-                
-                <!-- Overlay Canvas Watermark / Hint -->
-                <div class="absolute bottom-4 left-4 pointer-events-none bg-slate-950/80 backdrop-blur border border-slate-800 px-3 py-1.5 rounded-xl text-[11px] text-slate-400 flex items-center gap-2">
-                    <i class="fa-solid fa-hand-pointer text-emerald-400"></i>
-                    Gunakan mouse / sentuhan untuk merotasi dan memperbesar tampilan 3D
-                </div>
-            </div>
-
-            <!-- Detail Information Sidebar -->
-            <div class="lg:col-span-4 glass-card rounded-3xl p-6 border border-slate-800 flex flex-col justify-between" id="poiDetailCard">
-                <div>
-                    <div class="flex items-center justify-between gap-2 mb-3">
-                        <span id="poiBadge" class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                            Fasilitas Desa
-                        </span>
-                        <span class="text-xs text-slate-500" id="poiCoord">4°19'09"S 102°57'49"E</span>
-                    </div>
-
-                    <h3 id="poiTitle" class="text-xl font-bold text-white mb-2">Jembatan Gantung Ataran Lubuk Betung</h3>
-                    
-                    <p id="poiDescription" class="text-slate-300 text-sm leading-relaxed mb-4">
-                        Jembatan gantung yang dibangun dengan mekanisme swakelola anggaran Dana Desa. Mempermudah akses transportasi masyarakat menuju kawasan persawahan produktif seluas kurang lebih 8 Hektare.
-                    </p>
-
-                    <div class="space-y-2.5 pt-2 border-t border-slate-800 text-xs text-slate-300" id="poiSpecs">
-                        <div class="flex justify-between"><span class="text-slate-400">Tahun Realisasi:</span> <span class="font-semibold text-white">2020</span></div>
-                        <div class="flex justify-between"><span class="text-slate-400">Manfaat Utama:</span> <span class="font-semibold text-emerald-400">Akses Tani & Sawah</span></div>
-                        <div class="flex justify-between"><span class="text-slate-400">Lokasi:</span> <span class="font-semibold text-white">Ataran Lubuk Betung</span></div>
-                    </div>
-                </div>
-
-                <div class="mt-6 pt-4 border-t border-slate-800">
-                    <button onclick="showPoiGallery()" class="w-full bg-slate-800 hover:bg-slate-700 text-emerald-400 font-semibold text-xs py-2.5 rounded-xl transition flex items-center justify-center gap-2 border border-slate-700">
-                        <i class="fa-solid fa-images"></i> Lihat Galeri & Dokumentasi
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Quick POI Grid Selector -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-4">
-            <button onclick="selectPOI(0)" class="glass-card hover:bg-slate-800 p-3 rounded-2xl text-left border border-slate-800 transition group">
-                <div class="text-emerald-400 text-lg mb-1 group-hover:scale-110 transition-transform"><i class="fa-solid fa-bridge"></i></div>
-                <div class="text-xs font-bold text-white">Jembatan Gantung</div>
-                <div class="text-[10px] text-slate-400">Lubuk Betung</div>
-            </button>
-            <button onclick="selectPOI(1)" class="glass-card hover:bg-slate-800 p-3 rounded-2xl text-left border border-slate-800 transition group">
-                <div class="text-teal-400 text-lg mb-1 group-hover:scale-110 transition-transform"><i class="fa-solid fa-futbol"></i></div>
-                <div class="text-xs font-bold text-white">Lapangan Futsal</div>
-                <div class="text-[10px] text-slate-400">Olahraga & Remaja</div>
-            </button>
-            <button onclick="selectPOI(2)" class="glass-card hover:bg-slate-800 p-3 rounded-2xl text-left border border-slate-800 transition group">
-                <div class="text-amber-400 text-lg mb-1 group-hover:scale-110 transition-transform"><i class="fa-solid fa-[#6f4e37] fa-mug-hot"></i></div>
-                <div class="text-xs font-bold text-white">Kebun Kopi</div>
-                <div class="text-[10px] text-slate-400">Robusta Ulu Manna</div>
-            </button>
-            <button onclick="selectPOI(3)" class="glass-card hover:bg-slate-800 p-3 rounded-2xl text-left border border-slate-800 transition group">
-                <div class="text-cyan-400 text-lg mb-1 group-hover:scale-110 transition-transform"><i class="fa-solid fa-water"></i></div>
-                <div class="text-xs font-bold text-white">Sungai Pino</div>
-                <div class="text-[10px] text-slate-400">Aliran Air & Wisata</div>
-            </button>
-            <button onclick="selectPOI(4)" class="glass-card hover:bg-slate-800 p-3 rounded-2xl text-left border border-slate-800 transition group">
-                <div class="text-blue-400 text-lg mb-1 group-hover:scale-110 transition-transform"><i class="fa-solid fa-building-flag"></i></div>
-                <div class="text-xs font-bold text-white">Kantor Desa</div>
-                <div class="text-[10px] text-slate-400">Pusat Layanan</div>
-            </button>
-            <button onclick="selectPOI(5)" class="glass-card hover:bg-slate-800 p-3 rounded-2xl text-left border border-slate-800 transition group">
-                <div class="text-purple-400 text-lg mb-1 group-hover:scale-110 transition-transform"><i class="fa-solid fa-wheat-awn"></i></div>
-                <div class="text-xs font-bold text-white">Sawah Ataran</div>
-                <div class="text-[10px] text-slate-400">Padi Produktif</div>
-            </button>
-        </div>
-    </section>
-
-    <!-- POTENSI & WISATA DESA SECTION -->
-    <section id="potensi" class="py-12 px-4 lg:px-8 max-w-7xl mx-auto w-full">
-        <div class="text-center max-w-2xl mx-auto mb-10">
-            <span class="text-emerald-400 text-xs font-semibold uppercase tracking-wider">Kekayaan Lokal</span>
-            <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-1">Potensi Komoditas & Daya Tarik Wisata</h2>
-            <p class="text-slate-400 text-sm mt-2">Merambung menyajikan perpaduan pesona alam pegunungan, komoditas perkebunan berkualitas, serta kearifan suku Serawai Bengkulu Selatan.</p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- Card 1: Kopi Robusta Ulu Manna -->
-            <div class="glass-card glass-card-hover rounded-3xl p-6 border border-slate-800 flex flex-col justify-between">
-                <div>
-                    <div class="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-2xl mb-4">
-                        <i class="fa-solid fa-mug-hot"></i>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Kopi Robusta Ulu Manna</h3>
-                    <p class="text-slate-300 text-xs leading-relaxed mb-4">
-                        Ditanam pada ketinggian bukit pegunungan dengan tanah vulkanis subur. Biji kopi diproses secara tradisional dan modern menghasilkan aroma mantap khas Bengkulu Selatan.
-                    </p>
-                </div>
-                <div class="pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
-                    <span class="text-slate-400">Hasil Panen: <strong class="text-amber-400">Melimpah</strong></span>
-                    <button onclick="showDetailModal('kopi')" class="text-emerald-400 font-semibold hover:underline">Pelajari &rarr;</button>
-                </div>
-            </div>
-
-            <!-- Card 2: Wisata Alam & Arung Jeram -->
-            <div class="glass-card glass-card-hover rounded-3xl p-6 border border-slate-800 flex flex-col justify-between">
-                <div>
-                    <div class="w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-2xl mb-4">
-                        <i class="fa-solid fa-water"></i>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Sungai Pino & Wisata Air</h3>
-                    <p class="text-slate-300 text-xs leading-relaxed mb-4">
-                        Aliran jernih Sungai Pino membelah batas utara desa. Berdekatan dengan spot wisata Air Terjun Simpur, Geluguran, dan arung jeram Ulu Manna yang menantang adrenalin.
-                    </p>
-                </div>
-                <div class="pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
-                    <span class="text-slate-400">Potensi: <strong class="text-cyan-400">Ekoturisme</strong></span>
-                    <button onclick="showDetailModal('wisata')" class="text-emerald-400 font-semibold hover:underline">Pelajari &rarr;</button>
-                </div>
-            </div>
-
-            <!-- Card 3: Kehidupan Adat & Futsal Desa -->
-            <div class="glass-card glass-card-hover rounded-3xl p-6 border border-slate-800 flex flex-col justify-between">
-                <div>
-                    <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl mb-4">
-                        <i class="fa-solid fa-people-roof"></i>
-                    </div>
-                    <h3 class="text-lg font-bold text-white mb-2">Semangat Swakelola & Olahraga</h3>
-                    <p class="text-slate-300 text-xs leading-relaxed mb-4">
-                        Masyarakat Desa Merambung menjunjung tinggi kegotongroyongan. Pembangunan lapangan futsal desa dan jembatan gantung menjadi bukti komitmen pemberdayaan pemuda dan warga.
-                    </p>
-                </div>
-                <div class="pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
-                    <span class="text-slate-400">Program: <strong class="text-emerald-400">Kampung KB</strong></span>
-                    <button onclick="showDetailModal('budaya')" class="text-emerald-400 font-semibold hover:underline">Pelajari &rarr;</button>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- STATISTIK DEMOGRAFI & TRANSPARANSI DANA DESA -->
-    <section id="statistik" class="py-12 px-4 lg:px-8 max-w-7xl mx-auto w-full">
-        <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
-            <div>
-                <div class="text-emerald-400 text-xs font-semibold uppercase tracking-wider mb-1">Data & Transparansi</div>
-                <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Dashboard Demografi & Realisasi Dana Desa</h2>
-                <p class="text-slate-400 text-sm mt-1">Transparansi anggaran dan statistik pembangunan Desa Merambung Kecamatan Ulu Manna.</p>
-            </div>
-            <div class="flex items-center gap-2">
-                <span class="text-xs text-slate-400 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl">
-                    <i class="fa-solid fa-calendar text-emerald-400 mr-1"></i> Tahun Anggaran 2024-2026
-                </span>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <!-- Chart 1: Mata Pencaharian Penduduk -->
-            <div class="lg:col-span-6 glass-card rounded-3xl p-6 border border-slate-800">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-base font-bold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-briefcase text-emerald-400"></i> Mata Pencaharian Penduduk
-                    </h3>
-                    <span class="text-[11px] text-slate-400">Total ~208 KK</span>
-                </div>
-                <div class="h-64 relative">
-                    <canvas id="jobChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Chart 2: Alokasi Dana Desa (APBDes) -->
-            <div class="lg:col-span-6 glass-card rounded-3xl p-6 border border-slate-800">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-base font-bold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-coins text-amber-400"></i> Realisasi Dana Desa (DD)
-                    </h3>
-                    <span class="text-[11px] text-slate-400">Pembangunan & Pemberdayaan</span>
-                </div>
-                <div class="h-64 relative">
-                    <canvas id="budgetChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- LAYANAN MANDIRI & SURAT ONLINE -->
-    <section id="layanan" class="py-12 px-4 lg:px-8 max-w-7xl mx-auto w-full">
-        <div class="glass-card rounded-3xl p-6 lg:p-8 border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/30">
-            <div class="max-w-2xl mb-8">
-                <span class="text-emerald-400 text-xs font-semibold uppercase tracking-wider">Layanan Mandiri Warga</span>
-                <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-1">Pengajuan Surat Keterangan Online</h2>
-                <p class="text-slate-400 text-sm mt-2">Warga Desa Merambung dapat mengajukan permohonan surat administrasi secara digital tanpa antri di kantor desa.</p>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                <!-- Interactive Form -->
-                <form id="suratForm" onsubmit="handleSuratSubmit(event)" class="lg:col-span-7 space-y-4">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-medium text-slate-300 mb-1">Nama Lengkap Pemohon *</label>
-                            <input type="text" required placeholder="Contoh: Hamdani" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-300 mb-1">NIK (Nomor Induk Kependudukan) *</label>
-                            <input type="text" maxlength="16" required placeholder="170109xxxxxxxxxx" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-medium text-slate-300 mb-1">Jenis Surat Keterangan *</label>
-                            <select required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
-                                <option value="">-- Pilih Jenis Surat --</option>
-                                <option value="SKU">Surat Keterangan Usaha (SKU Tani/Kopi)</option>
-                                <option value="SKD">Surat Keterangan Domisili</option>
-                                <option value="SKTM">Surat Keterangan Tidak Mampu (SKTM)</option>
-                                <option value="SKP">Surat Pengantar Nikah / Keterangan Lain</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-300 mb-1">Nomor WhatsApp / HP *</label>
-                            <input type="tel" required placeholder="08xxxxxxxxxx" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
-                        </div>
-                    </div>
-
+                <div class="grid grid-cols-2 gap-3 pt-3 border-t border-slate-800 text-xs">
                     <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1">Keterangan / Keperluan Surat *</label>
-                        <textarea rows="3" required placeholder="Tuliskan keperluan pengajuan surat..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500"></textarea>
+                        <p class="text-slate-400">Total Anggaran</p>
+                        <p class="font-mono font-bold text-amber-300 text-sm">Rp 54.076.000</p>
+                    </div>
+                    <div>
+                        <p class="text-slate-400">Pelaksana Kegiatan</p>
+                        <p class="font-semibold text-emerald-300">TPK Desa Merambung</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Container Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
+
+        <!-- TAB 1: PETA WILAYAH INTERAKTIF -->
+        <section id="tab-peta" class="tab-content space-y-6">
+            <!-- Map Filter Toolbar & Controls -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider mr-2">Filter Titik:</span>
+                    <button onclick="filterMapMarkers('all')" class="map-filter-btn bg-brand-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium shadow-sm hover:bg-brand-700 transition">Semua Titik</button>
+                    <button onclick="filterMapMarkers('pemerintahan')" class="map-filter-btn bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs px-3 py-1.5 rounded-lg font-medium transition">Fasilitas Publik</button>
+                    <button onclick="filterMapMarkers('wisata')" class="map-filter-btn bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs px-3 py-1.5 rounded-lg font-medium transition">Wisata & Alam</button>
+                    <button onclick="filterMapMarkers('pertanian')" class="map-filter-btn bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs px-3 py-1.5 rounded-lg font-medium transition">Pertanian & Irigasi</button>
+                    <button onclick="filterMapMarkers('infrastruktur')" class="map-filter-btn bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs px-3 py-1.5 rounded-lg font-medium transition">Infrastruktur DD</button>
+                </div>
+
+                <div class="flex items-center gap-2 text-xs">
+                    <button onclick="toggleBoundaryOverlay()" id="btn-boundary" class="px-3 py-1.5 bg-emerald-100 text-emerald-800 rounded-lg font-semibold border border-emerald-300 hover:bg-emerald-200 transition flex items-center gap-1">
+                        <i class="fa-solid fa-draw-polygon"></i> Tampilkan Batas Wilayah
+                    </button>
+                    <button onclick="resetMapView()" class="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg font-medium hover:bg-slate-200 transition">
+                        <i class="fa-solid fa-rotate-right"></i> Reset Zoom
+                    </button>
+                </div>
+            </div>
+
+            <!-- Map Split View Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Map Canvas Column (2 Cols on lg) -->
+                <div class="lg:col-span-2 space-y-3">
+                    <div class="relative bg-white p-2 rounded-2xl shadow-md border border-slate-200">
+                        <div id="map"></div>
+                        <!-- Floating Map Legend -->
+                        <div class="absolute bottom-5 left-5 z-[400] bg-white/95 backdrop-blur-md p-3 rounded-xl shadow-lg border border-slate-200 text-xs space-y-1.5 hidden sm:block">
+                            <p class="font-bold text-slate-800 mb-1 border-b pb-1">Legenda Peta Desa</p>
+                            <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-emerald-600 inline-block"></span> Kantor & Fasilitas Desa</div>
+                            <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-amber-500 inline-block"></span> Wisata & Sungai Manna</div>
+                            <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-lime-600 inline-block"></span> Ataran Sawah & Kebun Kopi</div>
+                            <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-blue-600 inline-block"></span> Jembatan Gantung DD</div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-500 italic text-center sm:text-left">
+                        <i class="fa-solid fa-circle-info mr-1 text-brand-600"></i> Klik salah satu penanda lokasi pada peta di atas untuk melihat rincian informasi dan foto lokasi secara langsung.
+                    </p>
+                </div>
+
+                <!-- POI Detail Side Panel (1 Col on lg) -->
+                <div class="bg-white rounded-2xl shadow-md border border-slate-200 p-5 flex flex-col justify-between h-[520px] overflow-y-auto custom-scrollbar">
+                    <div id="poi-detail-content" class="space-y-4">
+                        <div class="border-b border-slate-100 pb-3">
+                            <span id="poi-category-badge" class="bg-emerald-100 text-emerald-800 text-[11px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Fasilitas Publik</span>
+                            <h3 id="poi-title" class="text-xl font-bold text-slate-800 mt-2">Kantor Desa Merambung</h3>
+                            <p id="poi-sub" class="text-xs text-slate-500 flex items-center gap-1 mt-1">
+                                <i class="fa-solid fa-location-dot text-rose-500"></i> Kec. Ulu Manna, Bengkulu Selatan
+                            </p>
+                        </div>
+
+                        <!-- Image Preview Placeholder -->
+                        <div class="relative h-44 rounded-xl overflow-hidden bg-slate-100 border border-slate-200">
+                            <img id="poi-image" src="https://images.unsplash.com/photo-1541888946425-d0fbb186a5b3?auto=format&fit=crop&w=600&q=80" alt="Preview Lokasi" class="w-full h-full object-cover">
+                            <div id="poi-status" class="absolute top-2 right-2 bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow">
+                                Aktif & Beroperasional
+                            </div>
+                        </div>
+
+                        <p id="poi-description" class="text-sm text-slate-600 leading-relaxed">
+                            Pusat pelayanan administrasi kependudukan dan kegiatan pemerintahan Desa Merambung, Kecamatan Ulu Manna. Dilengkapi dengan balai perteuan masyarakat serta pos informasi pelayanan desa.
+                        </p>
+
+                        <!-- Information List -->
+                        <div id="poi-specs" class="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-2 text-xs">
+                            <div class="flex justify-between text-slate-600">
+                                <span class="font-medium"><i class="fa-solid fa-clock text-brand-600 mr-1"></i> Jam Layanan:</span>
+                                <span class="font-semibold text-slate-800">Senin - Jumat (08:00 - 15:30 WIB)</span>
+                            </div>
+                            <div class="flex justify-between text-slate-600">
+                                <span class="font-medium"><i class="fa-solid fa-compass text-brand-600 mr-1"></i> Koordinat:</span>
+                                <span id="poi-coords" class="font-mono text-slate-800">-4.3191, 102.9636</span>
+                            </div>
+                            <div class="flex justify-between text-slate-600">
+                                <span class="font-medium"><i class="fa-solid fa-user-shield text-brand-600 mr-1"></i> Pengelola:</span>
+                                <span class="font-semibold text-slate-800">Pemerintah Desa Merambung</span>
+                            </div>
+                        </div>
                     </div>
 
-                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs py-3 rounded-xl transition shadow-lg shadow-emerald-900/30 flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-paper-plane"></i> Kirim Permohonan Surat
-                    </button>
-                </form>
-
-                <!-- Status Tracking Box -->
-                <div class="lg:col-span-5 bg-slate-950/80 rounded-2xl p-5 border border-slate-800">
-                    <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
-                        <i class="fa-solid fa-magnifying-glass text-emerald-400"></i> Cek Status Layanan (Tracking Resi)
-                    </h3>
-                    <p class="text-xs text-slate-400 mb-4">Masukkan nomor resi atau NIK Anda untuk melacak progress pengurusan dokumen.</p>
-
-                    <div class="flex gap-2 mb-4">
-                        <input type="text" id="trackingInput" placeholder="Masukkan Resi (Contoh: MRB-8832)" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
-                        <button onclick="checkTracking()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-semibold transition">
-                            Cek
+                    <div class="pt-4 border-t border-slate-100 mt-4 flex gap-2">
+                        <button onclick="openDirections()" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs py-2.5 rounded-lg shadow transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-diamond-turn-right"></i> Petunjuk Rute
+                        </button>
+                        <button onclick="sharePoi()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs px-3 py-2.5 rounded-lg transition">
+                            <i class="fa-solid fa-share-nodes"></i>
                         </button>
                     </div>
+                </div>
+            </div>
 
-                    <!-- Tracking Result Box -->
-                    <div id="trackingResult" class="hidden p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs space-y-2">
-                        <div class="flex justify-between items-center text-emerald-400 font-semibold">
-                            <span>Nomor Resi: <span id="resiId">MRB-8832</span></span>
-                            <span class="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded text-[10px]">Siap Diambil</span>
+            <!-- Quick Info Cards Below Map -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+                <div onclick="selectPoiById(1)" class="cursor-pointer bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:border-brand-500 hover:shadow-md transition">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
+                            <i class="fa-solid fa-bridge"></i>
                         </div>
-                        <div class="text-slate-300">Jenis: <strong class="text-white">Surat Keterangan Usaha Kopi</strong></div>
-                        <div class="text-slate-400 text-[11px]">Silakan ambil dokumen fisik di Kantor Desa Merambung pada jam kerja.</div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-sm">Jembatan Gantung Lubuk Betung</h4>
+                            <p class="text-xs text-slate-500">Akses Vital Persawahan & Kebun</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-600 mt-3 line-clamp-2">Akses penghubung utama bagi petani Desa Merambung menuju hamparan sawah seluas 8 Hektar di Ataran Lubuk Betung.</p>
+                </div>
+
+                <div onclick="selectPoiById(2)" class="cursor-pointer bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:border-brand-500 hover:shadow-md transition">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center font-bold">
+                            <i class="fa-solid fa-water-ladder"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-sm">Sungai Manna (Lintasan Merambung)</h4>
+                            <p class="text-xs text-slate-500">Potensi Arung Jeram & Wisata Air</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-600 mt-3 line-clamp-2">Aliran sungai jernih pegunungan Ulu Manna dengan jeram alami kelas dunia untuk olahraga rafting dan daya tarik wisata.</p>
+                </div>
+
+                <div onclick="selectPoiById(3)" class="cursor-pointer bg-white p-5 rounded-2xl shadow-sm border border-slate-200 hover:border-brand-500 hover:shadow-md transition">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold">
+                            <i class="fa-solid fa-wheat-awn"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-sm">Lahan Sadesahe (Satu Desa Satu Hektar)</h4>
+                            <p class="text-xs text-slate-500">Perkebunan Jagung & Ketahanan Pangan</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-600 mt-3 line-clamp-2">Program unggulan gerakan penanaman jagung terpadu untuk mendorong ketahanan pangan mandiri masyarakat desa.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: DEMOGRAFI & STATISTIK PENDUDUK -->
+        <section id="tab-demografi" class="tab-content hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">Statistik Kependudukan & Mata Pencaharian</h2>
+                        <p class="text-xs text-slate-500 mt-1">Data profil demografi Desa Merambung, Kec. Ulu Manna, Bengkulu Selatan</p>
+                    </div>
+                    <div class="bg-brand-50 text-brand-800 text-xs font-semibold px-3 py-1.5 rounded-lg border border-brand-200 flex items-center gap-1.5">
+                        <i class="fa-solid fa-chart-line text-brand-600"></i> Sumber Data: Kampung KB & Pemdes Merambung
+                    </div>
+                </div>
+
+                <!-- Charts Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6">
+                    <!-- Chart 1: Mata Pencaharian -->
+                    <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 flex flex-col justify-between">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-briefcase text-emerald-600"></i> Mata Pencaharian Penduduk
+                            </h3>
+                            <span class="text-[11px] text-slate-400">Persentase (%)</span>
+                        </div>
+                        <div class="h-64 relative flex items-center justify-center">
+                            <canvas id="chartPekerjaan"></canvas>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-3 text-center">
+                            Sebagian besar masyarakat Merambung bekerja di sektor pertanian kopi, lada/sahang, dan karet.
+                        </p>
+                    </div>
+
+                    <!-- Chart 2: Komposisi Usia -->
+                    <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 flex flex-col justify-between">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-users text-blue-600"></i> Kelompok Usia Penduduk
+                            </h3>
+                            <span class="text-[11px] text-slate-400">Jumlah Jiwa</span>
+                        </div>
+                        <div class="h-64 relative flex items-center justify-center">
+                            <canvas id="chartUsia"></canvas>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-3 text-center">
+                            Kelompok usia produktif (18 - 55 tahun) mendominasi populasi warga Desa Merambung.
+                        </p>
+                    </div>
+
+                    <!-- Chart 3: Tingkat Pendidikan -->
+                    <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 flex flex-col justify-between">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-graduation-cap text-purple-600"></i> Tingkat Pendidikan Warga
+                            </h3>
+                            <span class="text-[11px] text-slate-400">Tingkat Sekolah</span>
+                        </div>
+                        <div class="h-64 relative flex items-center justify-center">
+                            <canvas id="chartPendidikan"></canvas>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-3 text-center">
+                            Peningkatan bertahap akses pendidikan dasar hingga menengah di wilayah Ulu Manna.
+                        </p>
+                    </div>
+
+                    <!-- Chart 4: Alokasi Penggunaan Lahan -->
+                    <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 flex flex-col justify-between">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-layer-group text-amber-600"></i> Tata Guna Lahan Desa
+                            </h3>
+                            <span class="text-[11px] text-slate-400">Perkiraan (%)</span>
+                        </div>
+                        <div class="h-64 relative flex items-center justify-center">
+                            <canvas id="chartLahan"></canvas>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-3 text-center">
+                            Wilayah didominasi oleh perkebunan kopi/karet, hutan lindung Bukit Barisan, dan daerah aliran sungai.
+                        </p>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- SMART AGRO & KALENDER TANAM -->
-    <section id="agro" class="py-12 px-4 lg:px-8 max-w-7xl mx-auto w-full">
-        <div class="text-center max-w-2xl mx-auto mb-10">
-            <span class="text-emerald-400 text-xs font-semibold uppercase tracking-wider">Pertanian Cerdas Ulu Manna</span>
-            <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-1">Kalender Tanam & Panduan Agrikultur</h2>
-            <p class="text-slate-400 text-sm mt-2">Rekomendasi jadwal tanam padi Ataran Lubuk Betung dan perawatan kebun Kopi Robusta berdasarkan musim kawasan pegunungan Bengkulu.</p>
-        </div>
+        <!-- TAB 3: POTENSI & KOMODITAS DESA -->
+        <section id="tab-potensi" class="tab-content hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="border-b border-slate-100 pb-4 mb-6">
+                    <h2 class="text-2xl font-bold text-slate-800">Potensi Unggulan & Ekonomi Desa</h2>
+                    <p class="text-xs text-slate-500 mt-1">Kekayaan alam, komoditas pertanian, dan daya tarik wisata Desa Merambung Ulu Manna</p>
+                </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="glass-card rounded-3xl p-5 border border-slate-800">
-                <div class="text-xs text-emerald-400 font-semibold uppercase tracking-wide mb-1">Musim Tanam Padi</div>
-                <h3 class="text-base font-bold text-white mb-2">Sawah Ataran Lubuk Betung</h3>
-                <p class="text-xs text-slate-300 mb-3">Persiapan pengolahan tanah dan irigasi dari aliran air pegunungan.</p>
-                <div class="space-y-2 text-xs">
-                    <div class="flex justify-between py-1 border-b border-slate-800">
-                        <span class="text-slate-400">Penyemaian Bibit:</span>
-                        <span class="text-emerald-400 font-medium">Okt - Nov</span>
+                <!-- Cards Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-6">
+                    <!-- Card 1: Kopi Robusta Merambung -->
+                    <div class="bg-slate-50 rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                        <div>
+                            <div class="h-48 bg-slate-200 relative overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=600&q=80" alt="Kopi Robusta Merambung" class="w-full h-full object-cover">
+                                <span class="absolute top-3 left-3 bg-amber-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase">Komoditas Utama</span>
+                            </div>
+                            <div class="p-5 space-y-2">
+                                <h3 class="font-bold text-slate-800 text-lg">Kopi Robusta Merambung</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">
+                                    Dihasilkan dari perkebunan dataran tinggi Ulu Manna. Memiliki aroma khas yang kuat dengan cita rasa rempah alami dan keasaman yang seimbang.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="p-5 pt-0">
+                            <button onclick="orderProduct('Kopi Robusta Merambung')" class="w-full bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold py-2.5 rounded-lg transition flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-basket-shopping"></i> Informasi Produk & Pemesanan
+                            </button>
+                        </div>
                     </div>
-                    <div class="flex justify-between py-1 border-b border-slate-800">
-                        <span class="text-slate-400">Musim Panen Raya:</span>
-                        <span class="text-emerald-400 font-medium">Feb - Mar</span>
+
+                    <!-- Card 2: Arung Jeram Sungai Manna -->
+                    <div class="bg-slate-50 rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                        <div>
+                            <div class="h-48 bg-slate-200 relative overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1530866495561-507c9faab2ed?auto=format&fit=crop&w=600&q=80" alt="Arung Jeram Ulu Manna" class="w-full h-full object-cover">
+                                <span class="absolute top-3 left-3 bg-blue-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase">Wisata Alam</span>
+                            </div>
+                            <div class="p-5 space-y-2">
+                                <h3 class="font-bold text-slate-800 text-lg">Wisata Rafting Sungai Manna</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">
+                                    Sungai Manna menawarkan lintasan arung jeram dengan tantangan jeram bervariasi dan pemandangan perbukitan hijau yang memukau.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="p-5 pt-0">
+                            <button onclick="orderProduct('Paket Wisata Arung Jeram')" class="w-full bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold py-2.5 rounded-lg transition flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-compass"></i> Hubungi Pokdarwis / Pemandu
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: Program Sadesahe Jagung -->
+                    <div class="bg-slate-50 rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                        <div>
+                            <div class="h-48 bg-slate-200 relative overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1551754655-cd27e38d2076?auto=format&fit=crop&w=600&q=80" alt="Pertanian Jagung Merambung" class="w-full h-full object-cover">
+                                <span class="absolute top-3 left-3 bg-emerald-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase">Ketahanan Pangan</span>
+                            </div>
+                            <div class="p-5 space-y-2">
+                                <h3 class="font-bold text-slate-800 text-lg">Pertanian Jagung (Sadesahe)</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">
+                                    Dukungan program penanaman jagung terpadu untuk memaksimalkan lahan produktif dan meningkatkan pendapatan petani lokal Merambung.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="p-5 pt-0">
+                            <button onclick="orderProduct('Hasil Panen Jagung Merambung')" class="w-full bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold py-2.5 rounded-lg transition flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-wheat-awn"></i> Info Kemitraan Pertanian
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Card 4: Durian Lokal Merambung -->
+                    <div class="bg-slate-50 rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                        <div>
+                            <div class="h-48 bg-slate-200 relative overflow-hidden">
+                                <img src="kebunn durian.jpg" alt="Durian Merambung Ulu Manna" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://placehold.co/600x400/166534/ffffff?text=Durian+Merambung';">
+                                <span class="absolute top-3 left-3 bg-amber-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase">Buah Musiman</span>
+                            </div>
+                            <div class="p-5 space-y-2">
+                                <h3 class="font-bold text-slate-800 text-lg">Durian Merambung</h3>
+                                <p class="text-xs text-slate-600 leading-relaxed">
+                                    Durian khas pegunungan Ulu Manna dengan daging tebal, rasa manis gurih manis legit yang khas, serta aroma harum yang menjadi favorit wisata kuliner buah.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="p-5 pt-0">
+                            <button onclick="orderProduct('Durian Lokal Merambung')" class="w-full bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold py-2.5 rounded-lg transition flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-lemon"></i> Info Musim Panen & Pemesanan
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
+        </section>
 
-            <div class="glass-card rounded-3xl p-5 border border-slate-800">
-                <div class="text-xs text-amber-400 font-semibold uppercase tracking-wide mb-1">Perkebunan Kopi</div>
-                <h3 class="text-base font-bold text-white mb-2">Kopi Robusta Ulu Manna</h3>
-                <p class="text-xs text-slate-300 mb-3">Siklus pemangkasan, pemupukan organik, dan pemetikan merah (petik merah).</p>
-                <div class="space-y-2 text-xs">
-                    <div class="flex justify-between py-1 border-b border-slate-800">
-                        <span class="text-slate-400">Pemangkasan & Pemupukan:</span>
-                        <span class="text-amber-400 font-medium">Nov - Des</span>
+        <!-- TAB 4: TRANSPARANSI APBDES & PEMBANGUNAN -->
+        <section id="tab-transparansi" class="tab-content hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-100 pb-4 mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">Transparansi Dana Desa & Pembangunan</h2>
+                        <p class="text-xs text-slate-500 mt-1">Laporan realisasi dan alokasi anggaran APBDes Desa Merambung</p>
                     </div>
-                    <div class="flex justify-between py-1 border-b border-slate-800">
-                        <span class="text-slate-400">Panen Agung Kopi:</span>
-                        <span class="text-amber-400 font-medium">Mei - Jul</span>
+                    <span class="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1.5 rounded-lg border border-amber-300">
+                        <i class="fa-solid fa-shield-halved mr-1"></i> Terverifikasi TPK & BPD Merambung
+                    </span>
+                </div>
+
+                <!-- Featured Realization Banner with Real Photo -->
+                <div class="mb-8 bg-slate-900 text-white rounded-2xl overflow-hidden border border-slate-800 grid grid-cols-1 lg:grid-cols-3">
+                    <div class="lg:col-span-1 h-56 lg:h-auto relative">
+                        <img src="merambung.jpg" alt="Dokumentasi Pembangunan Jalan Rabat Beton Merambung" class="w-full h-full object-cover">
+                        <div class="absolute top-3 left-3 bg-emerald-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase">
+                            Dokumentasi Lapangan
+                        </div>
+                    </div>
+                    <div class="lg:col-span-2 p-6 flex flex-col justify-between space-y-4">
+                        <div>
+                            <div class="flex items-center gap-2 text-xs text-amber-400 font-semibold mb-1">
+                                <i class="fa-solid fa-road"></i> Bidang Pekerjaan Umum & Penataan Ruang (TA 2024)
+                            </div>
+                            <h3 class="text-lg font-bold text-white">Pembangunan / Pengerasan Jalan Usaha Tani (Rabat Beton)</h3>
+                            <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+                                Kegiatan fisik pengerasan jalan rabat beton akses menuju kawasan perkebunan dan persawahan warga Merambung. Dilaksanakan secara swakelola oleh Tim Pengelola Kegiatan (TPK) Desa Merambung bersama masyarakat.
+                            </p>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-800/80 p-3 rounded-xl border border-slate-700/60 text-xs">
+                            <div>
+                                <span class="text-slate-400 block text-[10px]">Volume Pekerjaan</span>
+                                <span class="font-bold text-white">2,15 x 0,10 x 100 M</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-400 block text-[10px]">Biaya Fisik</span>
+                                <span class="font-mono font-bold text-emerald-400">Rp 50.470.000</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-400 block text-[10px]">Biaya Operasional</span>
+                                <span class="font-mono font-bold text-amber-400">Rp 3.606.000</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-400 block text-[10px]">Total Dana (DD)</span>
+                                <span class="font-mono font-bold text-amber-300">Rp 54.076.000</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="glass-card rounded-3xl p-5 border border-slate-800">
-                <div class="text-xs text-cyan-400 font-semibold uppercase tracking-wide mb-1">Perikanan Air Tawar</div>
-                <h3 class="text-base font-bold text-white mb-2">Kolam & Sungai Pino</h3>
-                <p class="text-xs text-slate-300 mb-3">Budidaya ikan Nila, Mas, dan pelestarian lubuk larangan aliran sungai.</p>
-                <div class="space-y-2 text-xs">
-                    <div class="flex justify-between py-1 border-b border-slate-800">
-                        <span class="text-slate-400">Tebar Benih Ikan:</span>
-                        <span class="text-cyan-400 font-medium">Awal Musim Hujan</span>
+                <!-- Budget Summary Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                        <p class="text-xs font-medium text-slate-500">Pendapatan Desa (APBDes)</p>
+                        <p class="text-2xl font-extrabold text-slate-800 mt-1">Rp 985.400.000</p>
+                        <div class="w-full bg-slate-200 h-2 rounded-full mt-3 overflow-hidden">
+                            <div class="bg-brand-600 h-full" style="width: 100%"></div>
+                        </div>
+                        <span class="text-[10px] text-slate-400 mt-1 block">100% Target Anggaran</span>
                     </div>
-                    <div class="flex justify-between py-1 border-b border-slate-800">
-                        <span class="text-slate-400">Buka Lubuk Larangan:</span>
-                        <span class="text-cyan-400 font-medium">Musyawarah Adat</span>
+
+                    <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                        <p class="text-xs font-medium text-slate-500">Realisasi Pembangunan</p>
+                        <p class="text-2xl font-extrabold text-brand-600 mt-1">Rp 892.150.000</p>
+                        <div class="w-full bg-slate-200 h-2 rounded-full mt-3 overflow-hidden">
+                            <div class="bg-brand-600 h-full" style="width: 90.5%"></div>
+                        </div>
+                        <span class="text-[10px] text-brand-700 font-semibold mt-1 block">90.5% Terealisasi Fisik & Program</span>
+                    </div>
+
+                    <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                        <p class="text-xs font-medium text-slate-500">Fokus Program Utama</p>
+                        <p class="text-xl font-bold text-amber-600 mt-1">Jembatan & Pangan</p>
+                        <p class="text-xs text-slate-600 mt-2">Akses Ataran Lubuk Betung & Program Sadesahe</p>
                     </div>
                 </div>
-            </div>
-        </div>
-    </section>
 
-    <!-- FOOTER SECTION -->
-    <footer class="mt-auto border-t border-slate-800 bg-slate-950 py-8 px-4 lg:px-8 text-xs text-slate-400">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-            <div>
-                <div class="font-bold text-white text-sm">Pemerintah Desa Merambung</div>
-                <div>Kecamatan Ulu Manna, Kabupaten Bengkulu Selatan, Kode Pos 38573</div>
+                <!-- Project List Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-600 border-collapse">
+                        <thead class="bg-slate-100 text-slate-700 font-semibold text-xs uppercase tracking-wider">
+                            <tr>
+                                <th class="p-3.5 rounded-l-lg">Kegiatan / Pembangunan</th>
+                                <th class="p-3.5">Lokasi</th>
+                                <th class="p-3.5">Pagu Anggaran</th>
+                                <th class="p-3.5">Sumber Dana</th>
+                                <th class="p-3.5 rounded-r-lg">Status Realisasi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr class="hover:bg-slate-50 transition">
+                                <td class="p-3.5 font-semibold text-slate-800">Pembangunan Jalan Rabat Beton Usaha Tani (2,15m x 0,10m x 100m)</td>
+                                <td class="p-3.5">Akses Jembatan Gantung Ataran Lubuk Betung</td>
+                                <td class="p-3.5 font-mono text-slate-800">Rp 54.076.000</td>
+                                <td class="p-3.5"><span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">Dana Desa (DD 2024)</span></td>
+                                <td class="p-3.5"><span class="bg-emerald-500 text-white px-2 py-0.5 rounded text-[10px] font-bold">100% Selesai (TPK)</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 transition">
+                                <td class="p-3.5 font-semibold text-slate-800">Sertifikasi & Pemeliharaan Jembatan Gantung</td>
+                                <td class="p-3.5">Ataran Lubuk Betung</td>
+                                <td class="p-3.5 font-mono text-slate-800">Rp 245.000.000</td>
+                                <td class="p-3.5"><span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">Dana Desa (DD)</span></td>
+                                <td class="p-3.5"><span class="bg-emerald-500 text-white px-2 py-0.5 rounded text-[10px] font-bold">100% Selesai</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 transition">
+                                <td class="p-3.5 font-semibold text-slate-800">Program Penanaman Jagung Sadesahe</td>
+                                <td class="p-3.5">Lahan Ketahanan Pangan Desa</td>
+                                <td class="p-3.5 font-mono text-slate-800">Rp 68.500.000</td>
+                                <td class="p-3.5"><span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">DD Ketahanan Pangan</span></td>
+                                <td class="p-3.5"><span class="bg-blue-500 text-white px-2 py-0.5 rounded text-[10px] font-bold">Berjalan (Panen)</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 transition">
+                                <td class="p-3.5 font-semibold text-slate-800">Pemeliharaan Jalan Usaha Tani & Drainase</td>
+                                <td class="p-3.5">Dusun 1 & Dusun 2</td>
+                                <td class="p-3.5 font-mono text-slate-800">Rp 112.000.000</td>
+                                <td class="p-3.5"><span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">Dana Desa (DD)</span></td>
+                                <td class="p-3.5"><span class="bg-emerald-500 text-white px-2 py-0.5 rounded text-[10px] font-bold">100% Selesai</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 transition">
+                                <td class="p-3.5 font-semibold text-slate-800">Pemberdayaan Posyandu & Kesehatan Desa</td>
+                                <td class="p-3.5">Poskesdes Merambung</td>
+                                <td class="p-3.5 font-mono text-slate-800">Rp 45.000.000</td>
+                                <td class="p-3.5"><span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-bold">ADD Kab. Bengkulu Selatan</span></td>
+                                <td class="p-3.5"><span class="bg-emerald-500 text-white px-2 py-0.5 rounded text-[10px] font-bold">Rutin Berjalan</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            <div class="flex items-center gap-4 text-slate-400">
-                <a href="#visualizer" class="hover:text-emerald-400 transition">Peta 3D</a>
-                <a href="#layanan" class="hover:text-emerald-400 transition">Layanan Surat</a>
-                <a href="#statistik" class="hover:text-emerald-400 transition">APBDes</a>
-            </div>
-            <div class="text-slate-500">
-                © 2026 Portal Informasi Resmi Desa Merambung.
-            </div>
-        </div>
-    </footer>
+        </section>
 
-    <!-- TOAST NOTIFICATION CONTAINER -->
-    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+    </main>
 
-    <!-- MODAL POPUP DIALOG -->
-    <div id="infoModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm hidden">
-        <div class="glass-card max-w-lg w-full rounded-3xl p-6 border border-slate-700 shadow-2xl relative">
-            <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-            <h3 id="modalTitle" class="text-xl font-bold text-white mb-2">Detail Informasi</h3>
-            <div id="modalBody" class="text-xs text-slate-300 leading-relaxed space-y-3">
-                <!-- Dynamic Modal Content -->
-            </div>
-            <div class="mt-6 text-right">
-                <button onclick="closeModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition">
-                    Tutup
+    <!-- Modal Layanan & Pengaduan Warga -->
+    <div id="modalLayanan" class="fixed inset-0 z-[1000] hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden transform transition-all">
+            <div class="bg-brand-900 text-white p-5 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-paper-plane text-amber-400"></i>
+                    <h3 class="font-bold text-lg">Layanan Warga & Pengaduan</h3>
+                </div>
+                <button onclick="closeModal('modalLayanan')" class="text-slate-300 hover:text-white text-lg focus:outline-none">
+                    <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
+            
+            <form onsubmit="submitForm(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Lengkap Pemohon / Pelapor</label>
+                    <input type="text" required placeholder="Contoh: Ahmad Subagyo" class="w-full text-xs p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">NIK (KTP)</label>
+                        <input type="text" required placeholder="1701xxxxxxxxxxxx" class="w-full text-xs p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Nomor WhatsApp</label>
+                        <input type="tel" required placeholder="08xxxxxxxxxx" class="w-full text-xs p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Jenis Layanan</label>
+                    <select class="w-full text-xs p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        <option>Surat Keterangan Usaha (SKU)</option>
+                        <option>Surat Keterangan Domisili</option>
+                        <option>Permohonan Informasi Potensi / Produk Desa</option>
+                        <option>Laporan / Pengaduan Infrastruktur & Fasilitas</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Pesan / Keterangan Tambahan</label>
+                    <textarea rows="3" placeholder="Tuliskan detail permohonan atau aspirasi Anda di sini..." class="w-full text-xs p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea>
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('modalLayanan')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition">Batal</button>
+                    <button type="submit" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-lg shadow transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-paper-plane"></i> Kirim Permohonan
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
+    <!-- Footer Section -->
+    <footer class="bg-slate-900 text-slate-400 py-10 border-t border-slate-800 text-xs mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="space-y-3">
+                <div class="flex items-center gap-2 text-white">
+                    <i class="fa-solid fa-tree text-brand-500 text-lg"></i>
+                    <span class="font-bold text-base">Pemerintah Desa Merambung</span>
+                </div>
+                <p class="leading-relaxed text-slate-400">
+                    Kecamatan Ulu Manna, Kabupaten Bengkulu Selatan, Provinsi Bengkulu 38573.
+                </p>
+                <p class="text-slate-500 text-[11px]">
+                    Ataran Lubuk Betung & Daerah Aliran Sungai Manna
+                </p>
+            </div>
+
+            <div class="space-y-2">
+                <h4 class="font-semibold text-white text-sm">Tautan Cepat</h4>
+                <ul class="space-y-1.5 text-slate-400">
+                    <li><a href="#" onclick="switchTab('peta')" class="hover:text-brand-400 transition">Peta Digital Interaktif</a></li>
+                    <li><a href="#" onclick="switchTab('demografi')" class="hover:text-brand-400 transition">Data Kependudukan</a></li>
+                    <li><a href="#" onclick="switchTab('potensi')" class="hover:text-brand-400 transition">Komoditas & Wisata Ulu Manna</a></li>
+                    <li><a href="#" onclick="switchTab('transparansi')" class="hover:text-brand-400 transition">Laporan Transparansi APBDes</a></li>
+                </ul>
+            </div>
+
+            <div class="space-y-3">
+                <h4 class="font-semibold text-white text-sm">Kontak Resmi Desa</h4>
+                <p class="flex items-center gap-2"><i class="fa-solid fa-phone text-brand-500"></i> Call Center / WA Desa: +62 822-8100-xxxx</p>
+                <p class="flex items-center gap-2"><i class="fa-solid fa-envelope text-brand-500"></i> Email: pemdes.merambung@bengkuluselatankab.go.id</p>
+                <div class="pt-2 flex gap-3 text-slate-300">
+                    <a href="#" class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center hover:bg-brand-600 transition"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="#" class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center hover:bg-brand-600 transition"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="#" class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center hover:bg-brand-600 transition"><i class="fa-brands fa-whatsapp"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 pt-6 border-t border-slate-800/80 text-center text-slate-500 text-[11px]">
+            &copy; 2026 Portal Resmi Desa Merambung - Kecamatan Ulu Manna, Bengkulu Selatan. Sinergi Kemajuan Desa Berbasis Data & Transparansi.
+        </div>
+    </footer>
+
+    <!-- Notification Toast Element -->
+    <div id="toast" class="fixed bottom-5 right-5 z-[2000] hidden bg-slate-800 text-white px-4 py-3 rounded-xl shadow-2xl border border-slate-700 flex items-center gap-3 text-xs">
+        <i class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+        <span id="toast-message">Pesan notifikasi</span>
+    </div>
+
+    <!-- JavaScript Application Logic -->
     <script>
-        // POI (Points of Interest) Data for Desa Merambung
+        // Coordinate baseline for Desa Merambung, Ulu Manna, Bengkulu Selatan (~ -4.3191, 102.9636)
+        const MERAMBUNG_LAT = -4.319167;
+        const MERAMBUNG_LNG = 102.963611;
+
+        let map, markersLayer, boundaryPolygon;
+        let isBoundaryVisible = true;
+
+        // Points of Interest (POI) Dataset
         const poiData = [
             {
-                title: "Jembatan Gantung Ataran Lubuk Betung",
-                badge: "Infrastruktur Tani",
-                coord: "4°19'09\"S 102°57'49\"E",
-                desc: "Jembatan gantung berkonstruksi baja yang menghubungkan pemukiman warga Desa Merambung ke hamparan persawahan Ataran Lubuk Betung seluas 8 Hektare. Dibangun secara swakelola anggaran Dana Desa.",
+                id: 0,
+                title: "Kantor Desa Merambung",
+                category: "pemerintahan",
+                categoryLabel: "Fasilitas Publik",
+                lat: -4.319167,
+                lng: 102.963611,
+                icon: "fa-building-columns",
+                markerColor: "#16a34a",
+                image: "https://images.unsplash.com/photo-1541888946425-d0fbb186a5b3?auto=format&fit=crop&w=600&q=80",
+                description: "Pusat pemerintahan dan balai desa bagi masyarakat Desa Merambung, Kecamatan Ulu Manna. Tempat berlangsungnya pelayanan surat-menyimurat dan musyawarah desa.",
                 specs: {
-                    "Tahun Realisasi": "2020",
-                    "Fungsi Utama": "Transportasi Hasil Tani & Sawah",
-                    "Lokasi": "Ataran Lubuk Betung Desa Merambung",
-                    "Mekanisme": "Swakelola Warga Desa"
-                },
-                camPos: { x: 0, y: 3, z: 8 }
+                    jam: "Senin - Jumat (08:00 - 15:30 WIB)",
+                    coords: "-4.3191, 102.9636",
+                    pengelola: "Pemerintah Desa Merambung"
+                }
             },
             {
-                title: "Lapangan Futsal Swakelola Desa",
-                badge: "Fasilitas Olahraga",
-                coord: "4°19'12\"S 102°57'45\"E",
-                desc: "Fasilitas olahraga futsal terbuka yang dibangun menggunakan Dana Desa (DD) secara swakelola oleh masyarakat Merambung untuk sarana olahraga remaja dan warga.",
+                id: 1,
+                title: "Jembatan Gantung & Jalan Rabat Beton Usaha Tani",
+                category: "infrastruktur",
+                categoryLabel: "Infrastruktur DD",
+                lat: -4.322500,
+                lng: 102.961000,
+                icon: "fa-bridge",
+                markerColor: "#2563eb",
+                image: "merambung.jpg",
+                description: "Infrastruktur vital penghubung desa menuju kawasan persawahan dan perkebunan Ataran Lubuk Betung. Dilengkapi dengan pembangunan Jalan Rabat Beton Usaha Tani (2,15m x 0,10m x 100m) dari Dana Desa (DD) TA 2024.",
                 specs: {
-                    "Tahun Pembangunan": "2023",
-                    "Status": "Aktif & Digunakan Rutin",
-                    "Pengerjaan": "Swakelola Karang Taruna & Warga"
-                },
-                camPos: { x: -6, y: 4, z: 6 }
+                    jam: "Akses 24 Jam",
+                    coords: "-4.3225, 102.9610",
+                    pengelola: "TPK & Pemdes Merambung"
+                }
             },
             {
-                title: "Hamparan Perkebunan Kopi Robusta",
-                badge: "Komoditas Unggulan",
-                coord: "4°19'02\"S 102°58'10\"E",
-                desc: "Kawasan kebun kopi Robusta Ulu Manna yang tumbuh subur di lereng pegunungan Bukit Barisan. Menghasilkan biji kopi aroma khas bernilai ekonomi tinggi.",
+                id: 2,
+                title: "Sungai Manna (Zona Rafting & Wisata)",
+                category: "wisata",
+                categoryLabel: "Wisata & Alam",
+                lat: -4.316000,
+                lng: 102.968000,
+                icon: "fa-water-ladder",
+                markerColor: "#f59e0b",
+                image: "https://images.unsplash.com/photo-1530866495561-507c9faab2ed?auto=format&fit=crop&w=600&q=80",
+                description: "Aliran Sungai Manna di area Merambung dengan air jernih dan jeram pegunungan alami. Lokasi ideal untuk olahraga arung jeram dan rekreasi keluarga di akhir pekan.",
                 specs: {
-                    "Jenis Kopi": "Robusta Premium Ulu Manna",
-                    "Elevasi Tanam": "~300 - 500 mdpl",
-                    "Sistem Olah": "Petik Merah & Tradisional"
-                },
-                camPos: { x: 8, y: 5, z: 7 }
+                    jam: "Setiap Hari (08:00 - 17:00 WIB)",
+                    coords: "-4.3160, 102.9680",
+                    pengelola: "Pokdarwis Ulu Manna"
+                }
             },
             {
-                title: "Aliran Sungai Pino",
-                badge: "Sumber Daya Air & Wisata",
-                coord: "Batas Utara Desa Merambung",
-                desc: "Sungai Pino yang mengalir jernih membatasi wilayah utara desa. Menjadi sumber irigasi persawahan dan akses ke destinasi ekoturisme arung jeram Ulu Manna.",
+                id: 3,
+                title: "Kawasan Sadesahe (Lahan Jagung Desa)",
+                category: "pertanian",
+                categoryLabel: "Pertanian & Irigasi",
+                lat: -4.325000,
+                lng: 102.966000,
+                icon: "fa-wheat-awn",
+                markerColor: "#65a30d",
+                image: "https://images.unsplash.com/photo-1551754655-cd27e38d2076?auto=format&fit=crop&w=600&q=80",
+                description: "Lahan gerakan penanaman bibit jagung Satu Desa Satu Hektar (Sadesahe) untuk mendukung program kedaulatan pangan dan peningkatan ketahanan ekonomi warga desa.",
                 specs: {
-                    "Peran": "Irigasi & Potensi Wisata Air",
-                    "Kualitas Air": "Jernih Pegunungan",
-                    "Aktivitas": "Memancing & Arung Jeram"
-                },
-                camPos: { x: -2, y: 6, z: -8 }
+                    jam: "Jam Kerja Pertanian",
+                    coords: "-4.3250, 102.9660",
+                    pengelola: "Kelompok Tani Merambung & BPP"
+                }
             },
             {
-                title: "Kantor Desa & Pusat Pelayanan Publik",
-                badge: "Pemerintahan Desa",
-                coord: "Pusat Desa Merambung",
-                desc: "Pusat pelayanan administrasi kependudukan, musyawarah desa, dan koordinasi program Kampung KB Desa Merambung.",
+                id: 4,
+                title: "Poskesdes / Pustu Merambung",
+                category: "pemerintahan",
+                categoryLabel: "Fasilitas Publik",
+                lat: -4.318000,
+                lng: 102.962000,
+                icon: "fa-heart-pulse",
+                markerColor: "#dc2626",
+                image: "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=600&q=80",
+                description: "Pos Kesehatan Desa dan Puskesmas Pembantu yang menyediakan pelayanan kesehatan dasar, imunisasi anak, pemeriksaan ibu hamil, dan program Posyandu rutin.",
                 specs: {
-                    "Kepala Desa": "Hamdani",
-                    "Kecamatan": "Ulu Manna",
-                    "Jam Pelayanan": "Senin - Jumat (08:00 - 15:30 WIB)"
-                },
-                camPos: { x: -4, y: 3, z: 2 }
+                    jam: "Senin - Sabtu (08:00 - 14:00 WIB)",
+                    coords: "-4.3180, 102.9620",
+                    pengelola: "Dinas Kesehatan / Kader Kesehatan Desa"
+                }
             },
             {
-                title: "Persawahan Ataran Lubuk Betung",
-                badge: "Ketahanan Pangan",
-                coord: "Ataran Lubuk Betung",
-                desc: "Hamparan persawahan produktif seluas 8 Hektare yang menjadi salah satu tumpuan ketahanan pangan dan hasil beras lokal berkualitas warga Merambung.",
+                id: 5,
+                title: "Sentra Perkebunan Kopi, Sahang & Durian Ulu Manna",
+                category: "pertanian",
+                categoryLabel: "Pertanian & Perkebunan",
+                lat: -4.313000,
+                lng: 102.959000,
+                icon: "fa-seedling",
+                markerColor: "#84cc16",
+                image: "kebunn durian.jpg",
+                description: "Hamparan perkebunan kopi robusta, lada (sahang), dan komoditas buah durian manis khas perbukitan Desa Merambung dengan tradisi panen alami pegunungan Ulu Manna.",
                 specs: {
-                    "Luas Persawahan": "± 8 Hektare",
-                    "Sistem Irigasi": "Sungai Pino / Pegunungan",
-                    "Hasil Panen": "Padi Sawah Melimpah"
-                },
-                camPos: { x: 4, y: 4, z: -4 }
+                    jam: "Akses Perkebunan Warga",
+                    coords: "-4.3130, 102.9590",
+                    pengelola: "Petani Lokal Merambung"
+                }
             }
         ];
 
-        let scene, camera, renderer, poiMarkers = [];
-        let targetCameraPos = { x: 0, y: 6, z: 12 };
+        window.addEventListener('load', function() {
+            initMap();
+            initCharts();
+        });
 
-        function initThreeJS() {
-            const container = document.getElementById('threejs-container');
-            if(!container) return;
-
-            // Create Scene
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x0f172a);
-            scene.fog = new THREE.FogExp2(0x0f172a, 0.03);
-
-            // Camera
-            camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
-            camera.position.set(0, 8, 14);
-            camera.lookAt(0, 0, 0);
-
-            // Renderer
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(container.clientWidth, container.clientHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            renderer.shadowMap.enabled = true;
-            container.appendChild(renderer.domElement);
-
-            // Lighting
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-            scene.add(ambientLight);
-
-            const dirLight = new THREE.DirectionalLight(0x38bdf8, 0.8);
-            dirLight.position.set(10, 20, 10);
-            dirLight.castShadow = true;
-            scene.add(dirLight);
-
-            const greenLight = new THREE.PointLight(0x22c55e, 1.2, 20);
-            greenLight.position.set(0, 5, 0);
-            scene.add(greenLight);
-
-            // Terrain Base (Hill / Village Visual)
-            const terrainGeo = new THREE.PlaneGeometry(24, 24, 32, 32);
-            // Add elevation variation to terrain
-            const pos = terrainGeo.attributes.position;
-            for (let i = 0; i < pos.count; i++) {
-                const vx = pos.getX(i);
-                const vy = pos.getY(i);
-                const vz = Math.sin(vx * 0.4) * Math.cos(vy * 0.4) * 0.8 + Math.sin(vx * 0.2) * 0.5;
-                pos.setZ(i, vz);
-            }
-            terrainGeo.computeVertexNormals();
-
-            const terrainMat = new THREE.MeshStandardMaterial({
-                color: 0x1e293b,
-                roughness: 0.8,
-                wireframe: false,
-                flatShading: true
+        function initMap() {
+            // Create map centered on Merambung
+            map = L.map('map', {
+                center: [MERAMBUNG_LAT, MERAMBUNG_LNG],
+                zoom: 14,
+                zoomControl: true
             });
-            const terrain = new THREE.Mesh(terrainGeo, terrainMat);
-            terrain.rotation.x = -Math.PI / 2;
-            scene.add(terrain);
 
-            // River Line (Sungai Pino representation)
-            const riverGeo = new THREE.BoxGeometry(24, 0.1, 2.5);
-            const riverMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.2, metalness: 0.8 });
-            const river = new THREE.Mesh(riverGeo, riverMat);
-            river.position.set(0, 0.1, -6);
-            river.rotation.y = 0.1;
-            scene.add(river);
+            // Tile Layer (OpenStreetMap standard)
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap contributors | Desa Merambung Ulu Manna'
+            }).addTo(map);
 
-            // Bridge Visual (Jembatan Gantung)
-            const bridgeGeo = new THREE.BoxGeometry(0.8, 0.4, 3.5);
-            const bridgeMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.6 });
-            const bridge = new THREE.Mesh(bridgeGeo, bridgeMat);
-            bridge.position.set(0, 0.4, -6);
-            scene.add(bridge);
+            markersLayer = L.layerGroup().addTo(map);
 
-            // Trees & Greenery Scatter
-            const treeGeo = new THREE.ConeGeometry(0.5, 1.2, 5);
-            const treeMat = new THREE.MeshStandardMaterial({ color: 0x16a34a, flatShading: true });
-            for(let i=0; i<35; i++) {
-                const tree = new THREE.Mesh(treeGeo, treeMat);
-                const tx = (Math.random() - 0.5) * 20;
-                const tz = (Math.random() - 0.5) * 20;
-                if(Math.abs(tz - (-6)) > 2) { // Avoid river
-                    tree.position.set(tx, 0.6, tz);
-                    scene.add(tree);
-                }
-            }
-
-            // POI Marker Spheres
-            const markerCoords = [
-                { x: 0, y: 1.2, z: -5 },   // Jembatan
-                { x: -5, y: 1, z: 3 },    // Futsal
-                { x: 6, y: 1.5, z: 4 },    // Kebun Kopi
-                { x: -3, y: 0.8, z: -6 },  // Sungai Pino
-                { x: -3, y: 1, z: 1 },     // Kantor Desa
-                { x: 4, y: 0.8, z: -3 }    // Sawah
+            // Draw Village Polygon Area (Estimated administrative overlay for visual richness)
+            const villageBounds = [
+                [-4.308, 102.952],
+                [-4.305, 102.972],
+                [-4.328, 102.975],
+                [-4.332, 102.955]
             ];
 
-            markerCoords.forEach((c, idx) => {
-                const sphereGeo = new THREE.SphereGeometry(0.35, 16, 16);
-                const sphereMat = new THREE.MeshStandardMaterial({
-                    color: idx === 0 ? 0x22c55e : (idx === 2 ? 0xf59e0b : 0x38bdf8),
-                    emissive: idx === 0 ? 0x15803d : 0x0369a1,
-                    emissiveIntensity: 0.5
+            boundaryPolygon = L.polygon(villageBounds, {
+                color: '#16a34a',
+                fillColor: '#22c55e',
+                fillOpacity: 0.12,
+                weight: 2,
+                dashArray: '5, 8'
+            }).addTo(map);
+
+            boundaryPolygon.bindTooltip("Batas Est. Wilayah Desa Merambung", { permanent: false, direction: "center" });
+
+            // Populate Map Markers
+            renderMapMarkers(poiData);
+        }
+
+        function renderMapMarkers(items) {
+            markersLayer.clearLayers();
+
+            items.forEach(poi => {
+                // Custom HTML Icon Marker
+                const customIcon = L.divIcon({
+                    className: 'custom-leaflet-marker',
+                    html: `<div style="background-color: ${poi.markerColor}; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; border:2px solid white; box-shadow:0 4px 8px rgba(0,0,0,0.3);">
+                            <i class="fa-solid ${poi.icon} text-sm"></i>
+                           </div>`,
+                    iconSize: [34, 34],
+                    iconAnchor: [17, 17]
                 });
-                const marker = new THREE.Mesh(sphereGeo, sphereMat);
-                marker.position.set(c.x, c.y, c.z);
-                scene.add(marker);
-                poiMarkers.push(marker);
+
+                const marker = L.marker([poi.lat, poi.lng], { icon: customIcon });
+                
+                marker.on('click', () => {
+                    selectPoi(poi);
+                });
+
+                marker.bindPopup(`
+                    <div class="text-xs p-1">
+                        <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded">${poi.categoryLabel}</span>
+                        <h4 class="font-bold text-slate-800 text-sm mt-1">${poi.title}</h4>
+                        <p class="text-slate-500 text-[11px] mt-0.5">Kec. Ulu Manna, Bengkulu Selatan</p>
+                    </div>
+                `);
+
+                markersLayer.addLayer(marker);
             });
-
-            // Handle Resize
-            window.addEventListener('resize', onWindowResize);
-
-            // Animation Loop
-            animate();
         }
 
-        function animate() {
-            requestAnimationFrame(animate);
-
-            // Smooth camera transition
-            camera.position.x += (targetCameraPos.x - camera.position.x) * 0.05;
-            camera.position.y += (targetCameraPos.y - camera.position.y) * 0.05;
-            camera.position.z += (targetCameraPos.z - camera.position.z) * 0.05;
-            camera.lookAt(0, 0, 0);
-
-            // Rotate markers gently
-            poiMarkers.forEach((m, i) => {
-                m.position.y += Math.sin(Date.now() * 0.003 + i) * 0.002;
-            });
-
-            renderer.render(scene, camera);
+        function selectPoi(poi) {
+            document.getElementById('poi-title').innerText = poi.title;
+            document.getElementById('poi-category-badge').innerText = poi.categoryLabel;
+            document.getElementById('poi-image').src = poi.image;
+            document.getElementById('poi-description').innerText = poi.description;
+            document.getElementById('poi-coords').innerText = poi.specs.coords;
+            
+            // Pan map to clicked POI
+            map.flyTo([poi.lat, poi.lng], 16, { duration: 1.2 });
         }
 
-        function onWindowResize() {
-            const container = document.getElementById('threejs-container');
-            if(!container || !renderer) return;
-            camera.aspect = container.clientWidth / container.clientHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(container.clientWidth, container.clientHeight);
-        }
-
-        function selectPOI(index) {
-            const data = poiData[index];
-            if (!data) return;
-
-            // Update UI Sidebar
-            document.getElementById('poiBadge').innerText = data.badge;
-            document.getElementById('poiCoord').innerText = data.coord;
-            document.getElementById('poiTitle').innerText = data.title;
-            document.getElementById('poiDescription').innerText = data.desc;
-
-            // Update specs
-            let specsHTML = '';
-            for (let [key, val] of Object.entries(data.specs)) {
-                specsHTML += `<div class="flex justify-between"><span class="text-slate-400">${key}:</span> <span class="font-semibold text-white">${val}</span></div>`;
+        function selectPoiById(id) {
+            const poi = poiData.find(p => p.id === id);
+            if (poi) {
+                // Switch to map tab if not active
+                switchTab('peta');
+                selectPoi(poi);
             }
-            document.getElementById('poiSpecs').innerHTML = specsHTML;
-
-            // Smooth Camera Move
-            targetCameraPos = data.camPos;
-
-            showToast(`Menampilkan: ${data.title}`, 'info');
         }
 
-        function setMapCamera(view) {
-            if(view === 'overview') targetCameraPos = { x: 0, y: 8, z: 14 };
-            if(view === 'jembatan') selectPOI(0);
-            if(view === 'futsal') selectPOI(1);
-            if(view === 'kebun') selectPOI(2);
+        function filterMapMarkers(category) {
+            // Update active button state
+            document.querySelectorAll('.map-filter-btn').forEach(btn => {
+                btn.classList.remove('bg-brand-600', 'text-white');
+                btn.classList.add('bg-slate-100', 'text-slate-700');
+            });
+            event.target.classList.remove('bg-slate-100', 'text-slate-700');
+            event.target.classList.add('bg-brand-600', 'text-white');
+
+            if (category === 'all') {
+                renderMapMarkers(poiData);
+            } else {
+                const filtered = poiData.filter(p => p.category === category);
+                renderMapMarkers(filtered);
+            }
+        }
+
+        function toggleBoundaryOverlay() {
+            const btn = document.getElementById('btn-boundary');
+            if (isBoundaryVisible) {
+                map.removeLayer(boundaryPolygon);
+                isBoundaryVisible = false;
+                btn.classList.remove('bg-emerald-100', 'text-emerald-800');
+                btn.classList.add('bg-slate-100', 'text-slate-600');
+            } else {
+                boundaryPolygon.addTo(map);
+                isBoundaryVisible = true;
+                btn.classList.remove('bg-slate-100', 'text-slate-600');
+                btn.classList.add('bg-emerald-100', 'text-emerald-800');
+            }
+        }
+
+        function resetMapView() {
+            map.flyTo([MERAMBUNG_LAT, MERAMBUNG_LNG], 14, { duration: 1 });
+            renderMapMarkers(poiData);
         }
 
         function initCharts() {
-            // Chart 1: Demografi Pekerjaan
-            const ctx1 = document.getElementById('jobChart').getContext('2d');
-            new Chart(ctx1, {
+            // Chart 1: Mata Pencaharian
+            const ctxPekerjaan = document.getElementById('chartPekerjaan').getContext('2d');
+            new Chart(ctxPekerjaan, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Petani Kopi & Padi', 'Pekebun / Tani Harian', 'Wiraswasta / Dagang', 'PNS / Guru / Perangkat', 'Jasa & Lainnya'],
+                    labels: ['Petani Kopi & Sahang', 'Petani Karet & Sawah', 'PNS / Guru / Nakes', 'Pedagang & UMKM', 'Lainnya'],
                     datasets: [{
-                        data: [55, 25, 10, 5, 5],
-                        backgroundColor: ['#22c55e', '#f59e0b', '#06b6d4', '#8b5cf6', '#64748b'],
-                        borderWidth: 0
+                        data: [55, 25, 8, 7, 5],
+                        backgroundColor: ['#16a34a', '#84cc16', '#2563eb', '#f59e0b', '#94a3b8'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: { color: '#94a3b8', font: { size: 11 } }
-                        }
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } }
                     }
                 }
             });
 
-            // Chart 2: Realisasi APBDes / Dana Desa
-            const ctx2 = document.getElementById('budgetChart').getContext('2d');
-            new Chart(ctx2, {
+            // Chart 2: Komposisi Usia
+            const ctxUsia = document.getElementById('chartUsia').getContext('2d');
+            new Chart(ctxUsia, {
                 type: 'bar',
                 data: {
-                    labels: ['Jembatan Gantung', 'Lapangan Futsal', 'Ketahanan Pangan', 'Operasional & Posyandu', 'Pemberdayaan'],
+                    labels: ['0-14 Th (Anak)', '15-24 Th (Pemuda)', '25-54 Th (Produktif)', '55+ Th (Lansia)'],
                     datasets: [{
-                        label: 'Alokasi Dana (Rp)',
-                        data: [180000000, 266447760, 95000000, 75000000, 60000000],
-                        backgroundColor: '#16a34a',
-                        borderRadius: 8
+                        label: 'Jumlah Jiwa',
+                        data: [135, 110, 265, 120],
+                        backgroundColor: '#2563eb',
+                        borderRadius: 6
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    scales: {
-                        x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { display: false } },
-                        y: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
-                    },
                     plugins: {
                         legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // Chart 3: Tingkat Pendidikan
+            const ctxPendidikan = document.getElementById('chartPendidikan').getContext('2d');
+            new Chart(ctxPendidikan, {
+                type: 'pie',
+                data: {
+                    labels: ['SD / Sederajat', 'SMP / Sederajat', 'SMA / SMK', 'Diploma / Sarjana'],
+                    datasets: [{
+                        data: [210, 180, 190, 50],
+                        backgroundColor: ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } }
+                    }
+                }
+            });
+
+            // Chart 4: Penggunaan Lahan
+            const ctxLahan = document.getElementById('chartLahan').getContext('2d');
+            new Chart(ctxLahan, {
+                type: 'polarArea',
+                data: {
+                    labels: ['Perkebunan Kopi/Sahang', 'Hutan Lindung & Pegunungan', 'Persawahan Lubuk Betung', 'Pemukiman Warga', 'Lahan Sadesahe Jagung'],
+                    datasets: [{
+                        data: [45, 30, 12, 8, 5],
+                        backgroundColor: [
+                            'rgba(22, 163, 74, 0.7)',
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(245, 158, 11, 0.7)',
+                            'rgba(148, 163, 184, 0.7)',
+                            'rgba(132, 204, 22, 0.7)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } }
                     }
                 }
             });
         }
 
-        function showToast(msg, type = 'success') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = `pointer-events-auto bg-slate-900 border border-slate-700 text-white px-4 py-3 rounded-2xl shadow-xl text-xs flex items-center gap-3 transform transition-all duration-300 translate-y-4 opacity-0`;
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             
-            const icon = type === 'success' ? '<i class="fa-solid fa-circle-check text-emerald-400 text-base"></i>' : '<i class="fa-solid fa-circle-info text-cyan-400 text-base"></i>';
-            toast.innerHTML = `${icon} <span>${msg}</span>`;
+            // Remove active style from nav buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-brand-700', 'text-white', 'shadow');
+                btn.classList.add('text-brand-100', 'hover:bg-brand-800');
+            });
+
+            // Show target tab
+            const target = document.getElementById(`tab-${tabName}`);
+            if (target) target.classList.remove('hidden');
+
+            // Set active button style
+            const activeBtn = document.getElementById(`nav-${tabName}`);
+            if (activeBtn) {
+                activeBtn.classList.add('bg-brand-700', 'text-white', 'shadow');
+                activeBtn.classList.remove('text-brand-100', 'hover:bg-brand-800');
+            }
+
+            // Invalidate Leaflet map size when tab switches to ensure proper rendering
+            if (tabName === 'peta' && map) {
+                setTimeout(() => {
+                    map.invalidateSize();
+                }, 200);
+            }
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function openDirections() {
+            const coords = document.getElementById('poi-coords').innerText;
+            const url = `https://www.google.com/maps/dir/?api=1&destination=${coords.replace(' ', '')}`;
+            window.open(url, '_blank');
+        }
+
+        function sharePoi() {
+            const title = document.getElementById('poi-title').innerText;
+            const textToCopy = `Informasi Lokasi Desa Merambung, Ulu Manna: ${title}`;
             
-            container.appendChild(toast);
+            // Clipboard fallback
+            const dummy = document.createElement('textarea');
+            document.body.appendChild(dummy);
+            dummy.value = textToCopy;
+            dummy.select();
+            document.execCommand('copy');
+            document.body.removeChild(dummy);
 
-            setTimeout(() => {
-                toast.classList.remove('translate-y-4', 'opacity-0');
-            }, 10);
+            showToast("Teks informasi lokasi telah disalin ke clipboard!");
+        }
 
+        function orderProduct(productName) {
+            openModal('modalLayanan');
+            showToast(`Membuka form layanan/pemesanan untuk: ${productName}`);
+        }
+
+        function submitForm(e) {
+            e.preventDefault();
+            closeModal('modalLayanan');
+            showToast("Permohonan/Pengaduan Anda berhasil terkirim ke Pemdes Merambung!");
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            toastMsg.innerText = msg;
+            toast.classList.remove('hidden');
             setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-y-4');
-                setTimeout(() => toast.remove(), 300);
+                toast.classList.add('hidden');
             }, 3500);
         }
-
-        function handleSuratSubmit(e) {
-            e.preventDefault();
-            const resi = 'MRB-' + Math.floor(1000 + Math.random() * 9000);
-            showToast(`Permohonan terkirim! Nomor Resi Anda: ${resi}`, 'success');
-            
-            // Auto fill tracking input for preview
-            document.getElementById('trackingInput').value = resi;
-            e.target.reset();
-        }
-
-        function checkTracking() {
-            const input = document.getElementById('trackingInput').value.trim();
-            const resBox = document.getElementById('trackingResult');
-            if (!input) {
-                showToast('Masukkan nomor resi terlebih dahulu!', 'info');
-                return;
-            }
-            document.getElementById('resiId').innerText = input;
-            resBox.classList.remove('hidden');
-            showToast('Data status permohonan berhasil ditemukan.', 'success');
-        }
-
-        function showDetailModal(topic) {
-            const modal = document.getElementById('infoModal');
-            const title = document.getElementById('modalTitle');
-            const body = document.getElementById('modalBody');
-
-            if (topic === 'kopi') {
-                title.innerText = 'Kopi Robusta Unggulan Ulu Manna';
-                body.innerHTML = `
-                    <p>Desa Merambung berada di wilayah ketinggian Kecamatan Ulu Manna yang memiliki iklim ideal untuk tanaman kopi jenis Robusta.</p>
-                    <p><strong>Keunggulan:</strong> Aroma harum yang khas, bodi medium hingga tinggi, serta rasa gurih manis alami setelah dipanggang secara tradisional.</p>
-                    <p>Petani lokal saat ini terus meningkatkan kualitas panen dengan metode petik buah merah untuk menembus pasar warung kopi modern dan ekspor.</p>
-                `;
-            } else if (topic === 'wisata') {
-                title.innerText = 'Potensi Ekoturisme Ulu Manna';
-                body.innerHTML = `
-                    <p>Wilayah Desa Merambung dan sekitarnya dilintasi oleh perbukitan pesona Bukit Barisan serta aliran Sungai Pino.</p>
-                    <p><strong>Destinasi Terdekat:</strong></p>
-                    <ul class="list-disc pl-4 space-y-1">
-                        <li>Arung Jeram Air Tenam & Sungai Manna</li>
-                        <li>Air Terjun Simpur & Air Terjun Geluguran</li>
-                        <li>Habitat Alami Bunga Rafflesia Arnoldii</li>
-                    </ul>
-                `;
-            } else if (topic === 'budaya') {
-                title.innerText = 'Kearifan Adat Suku Serawai & Kegotongroyongan';
-                body.innerHTML = `
-                    <p>Masyarakat Merambung memegang teguh adat istiadat Suku Serawai dengan tradisi gotong royong yang kental.</p>
-                    <p>Pembangunan sarana desa seperti Lapangan Futsal dan Jembatan Gantung Ataran Lubuk Betung dikerjakan secara swakelola bersama seluruh elemen warga dan Karang Taruna.</p>
-                `;
-            }
-
-            modal.classList.remove('hidden');
-        }
-
-        function closeModal() {
-            document.getElementById('infoModal').classList.add('hidden');
-        }
-
-        function showPoiGallery() {
-            showDetailModal('wisata');
-        }
-
-        window.onload = function() {
-            // Initialize 3D scene & Charts
-            initThreeJS();
-            initCharts();
-
-            // Mobile menu toggle
-            const mobileBtn = document.getElementById('mobileMenuBtn');
-            const mobileMenu = document.getElementById('mobileMenu');
-            if(mobileBtn && mobileMenu) {
-                mobileBtn.addEventListener('click', () => {
-                    mobileMenu.classList.toggle('hidden');
-                });
-            }
-        };
     </script>
 </body>
 </html>
